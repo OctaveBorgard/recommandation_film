@@ -1,0 +1,12 @@
+FROM python:3.10
+
+WORKDIR /app
+
+COPY app/requirements-gradio.txt .
+RUN pip install -r requirements-gradio.txt
+
+COPY app/poster_gradio.py /app/poster_gradio.py
+
+EXPOSE 7860
+
+CMD ["python", "poster_gradio.py"]

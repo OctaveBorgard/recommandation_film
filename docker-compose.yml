@@ -1,0 +1,21 @@
+version: "3"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: app/Dockerfile-api
+    ports:
+      - "5075:5075"
+    volumes:
+      - ./app/poster_api.py:/app/poster_api.py
+
+  gradio:
+    build:
+      context: .
+      dockerfile: app/Dockerfile-gradio
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./app/poster_gradio.py:/app/poster-gradio.py
+    depends_on:
+      - api
