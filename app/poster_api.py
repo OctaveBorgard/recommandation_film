@@ -1,4 +1,6 @@
+import os
 import torch
+
 import torch.nn as nn
 from torchvision import transforms
 from flask import Flask, request, jsonify
@@ -27,8 +29,13 @@ CLASSES = [
 ]
 
 # Load the trained model
-model = VGG16Handmade(num_classes=len(CLASSES))
-model.load_state_dict(torch.load("genre_model.pth", map_location=device))
+# model = VGG16Handmade(num_classes=len(CLASSES))
+# model.load_state_dict(torch.load("genre_model.pth", map_location=device))
+from models import efficient_net
+model = efficient_net(num_classes=len(CLASSES))
+state = torch.load("exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth", map_location=device)
+model.load_state_dict(state["model_state_dict"])
+
 model.eval()
 
 # Preprocessing consistent with training

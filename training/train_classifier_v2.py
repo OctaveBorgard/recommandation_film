@@ -30,7 +30,7 @@ def training_loop(
     model = model.to(config.device)
     ema_model = AveragedModel(model, avg_fn=ema_avg_fn, use_buffers=True)
     ema_model = ema_model.to(config.device)
-    state = logger.load_checkpoint()
+    state = logger.load_latest_checkpoint()
     if state is not None:
         model.load_state_dict(state['model_state_dict'])
         optimizer.load_state_dict(state['optimizer_state_dict'])
