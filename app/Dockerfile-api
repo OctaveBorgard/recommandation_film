@@ -1,15 +1,12 @@
 FROM python:3.10
-
 WORKDIR /app
 
 COPY app/requirements-api.txt .
-RUN pip install -r requirements-api.txt
+RUN pip install --no-cache-dir -r requirements-api.txt
 
 COPY models /app/models
 COPY exp /app/exp
 COPY app/poster_api.py /app/poster_api.py
-COPY genre_model.pth /app/genre_model.pth
 
 EXPOSE 5075
-
 CMD ["python", "poster_api.py"]
