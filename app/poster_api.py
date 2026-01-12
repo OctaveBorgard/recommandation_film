@@ -1,14 +1,12 @@
-import os
 import torch
-
 import torch.nn as nn
 from torchvision import transforms
 from flask import Flask, request, jsonify
 from PIL import Image
 import io
-
+import torch.nn.functional as F
 from models import VGG16Handmade   
-
+import os
 app = Flask(__name__)
 
 
@@ -60,6 +58,42 @@ def predict():
         pred_idx = outputs.argmax(1).item()
 
     return jsonify({"genre": CLASSES[pred_idx]})
+# Out-of-Distribution detection by Maximum Softmax Probability (MSP) for Part 2
+def msp_score(logits):
+    """
+    Maximum Softmax Probability (OOD score)
+    """
+    probs = F.softmax(logits, dim=1)
+    score, _ = torch.max(probs, dim=1)
+    return score.item()
+
+@app.route("/validate-poster", methods=["POST"])
+def validate_poster():
+    # 1. It's a file ?
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    # 2. Read image
+    file = request.files["file"]
+    img = Image.open(io.BytesIO(file.read())).convert("RGB")
+
+    # 3. Preprocess like when we training
+    img_tensor = transform(img).unsqueeze(0)
+
+    # 4. Run model + calcul MSP score
+    with torch.no_grad():
+        logits = model(img_tensor)
+        confidence = msp_score(logits)
+
+    # 5. >= threshold => poster ; < threshold => not   
+    THRESHOLD = 0.2
+
+    # 6. Return result
+    return jsonify({
+        "is_poster": bool(confidence >= THRESHOLD),
+        "confidence": float(confidence),
+        "method": "OOD detection using Maximum Softmax Probability"
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075)
