@@ -16,6 +16,6 @@ services:
     ports:
       - "7860:7860"
     volumes:
-      - ./app/poster_gradio.py:/app/poster-gradio.py
+      - ./app/poster_gradio.py:/app/poster_gradio.py
     depends_on:
       - api
