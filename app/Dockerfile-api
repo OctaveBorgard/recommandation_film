@@ -5,7 +5,7 @@ COPY app/requirements-api.txt .
 RUN pip install --no-cache-dir -r requirements-api.txt
 
 COPY models /app/models
-COPY exp /app/exp
+COPY exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth /app/exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth
 COPY app/poster_api.py /app/poster_api.py
 
 EXPOSE 5075
