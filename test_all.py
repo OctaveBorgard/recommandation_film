@@ -42,7 +42,7 @@ train_dataset = NlpDataset(train_plot, train_labels, tokenizer)
 test_dataset = NlpDataset(test_plot,test_labels, tokenizer)
 
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64)
+test_loader = DataLoader(test_dataset, batch_size=10)
 # %%
 next(iter(train_loader))
 # %%
@@ -79,6 +79,7 @@ model = BertClf(distilbert)
 # %%
 from tqdm.notebook import tqdm
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+# device = torch.device("cpu")
 
 
 def train_bert(model, optimizer, criterion, dataloader, epochs):
@@ -125,13 +126,9 @@ def test_bert(model, dataloader):
 from transformers import DistilBertTokenizerFast,  DistilBertForSequenceClassification
 from torch.optim import AdamW
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
-optimizer = AdamW(model.parameters(),lr = 1e-5)
-criterion  = nn.CrossEntropyLoss()
-n_epochs = 1
-
-train_bert(model, optimizer, criterion, train_loader, n_epochs)
+state = torch.load("exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth")
+model.load_state_dict(state["model_state_dict"])
 test_bert(model, test_loader)
 
 # %%
