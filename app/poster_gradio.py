@@ -5,10 +5,10 @@ import os
 import io
 
 # API_URL = "http://localhost:5075/predict"
-API_URL = "http://api:5075/predict"  #API_URL  for predict
+API_URL = "http://api:5075/predict_poster"  #API_URL  for predict
 API_VALIDATE_URL = "http://api:5075/validate-poster"   # Partie 2
 
-def predict_genre(image):
+def predict_genre_poster(image):
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
@@ -40,7 +40,15 @@ def validate_poster(image):
     return f"Is poster: {result['is_poster']} (confidence: {result['confidence']:.2f})"
 
 def predict_genre_from_plot(plot):
-    return "Function not implemented yet."
+    response = requests.post(
+        "http://api:5075/predict_plot",
+        json={"text": plot}
+    )
+
+    if response.status_code != 200:
+        return "Error: API did not return a valid response."
+
+    return response.json().get("genre", "Unknown")
 
 with gr.Blocks() as app:
     gr.Markdown("# Movie Poster Tool")
@@ -54,7 +62,7 @@ with gr.Blocks() as app:
     genre_out = gr.Textbox(label="Predicted Genre")
     valid_out = gr.Textbox(label="Poster Validation")
 
-    btn_genre.click(fn=predict_genre, inputs=image_in, outputs=genre_out)
+    btn_genre.click(fn=predict_genre_poster, inputs=image_in, outputs=genre_out)
     btn_validate.click(fn=validate_poster, inputs=image_in, outputs=valid_out)
 
     with gr.Row():
