@@ -122,15 +122,4 @@ def test_bert(model, dataloader):
         test_corrects += predicted.eq(labels).sum().item()
         total += labels.size(0)
     return test_corrects / total
-# %%
-from transformers import DistilBertTokenizerFast,  DistilBertForSequenceClassification
-from torch.optim import AdamW
 
-model = model.to(device)
-state = torch.load("exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth")
-model.load_state_dict(state["model_state_dict"])
-test_bert(model, test_loader)
-
-# %%
-# save the model
-torch.save(model.state_dict(), "bert_movie_plot_classifier.pth")
