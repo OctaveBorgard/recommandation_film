@@ -39,11 +39,11 @@ def training_loop(
 
     for epoch in range(start_epoch, config.num_epochs):
         pb = tqdm(train_loader, desc=f"Epoch {epoch+1}/{config.num_epochs}", mininterval=10)
-        for input_ids, attention_mask, labels in pb:
+        for batch in pb:
             model.train()
-            input_ids = input_ids.to(config.device)
-            attention_mask = attention_mask.to(config.device)
-            labels = labels.to(config.device)
+            input_ids = batch["input_ids"].to(config.device)
+            attention_mask = batch["attention_mask"].to(config.device)
+            labels = batch["labels"].to(config.device)
 
             pred_labels,_,_ = model(input_ids, mask=attention_mask)
             loss = criterion(pred_labels, labels)
@@ -60,10 +60,10 @@ def training_loop(
             if ((logger.global_step + 1) % logger.log_loss_freq == 0) or (logger.global_step == 0):
                 
                 with torch.no_grad():
-                    input_ids_test, attention_mask_test, labels_test =next(iter(val_loader))
-                    input_ids_test = input_ids_test.to(config.device) 
-                    attention_mask_test = attention_mask_test.to(config.device)
-                    labels_test = labels_test.to(config.device)
+                    batch_test = next(iter(val_loader))
+                    input_ids_test = batch_test["input_ids"].to(config.device) 
+                    attention_mask_test = batch_test["attention_mask"].to(config.device)
+                    labels_test = batch_test["labels"].to(config.device)
 
                     pred_labels_test,_,_ = model(input_ids_test, mask=attention_mask_test)
                     test_loss = criterion(pred_labels_test, labels_test).item()
@@ -97,22 +97,6 @@ def training_loop(
             logger.save_checkpoint(state, epoch, metric_value=test_avg_loss.mean)
             if  epoch % logger.save_freq == 0:
                 logger.clean_old_checkpoint()
-                
-    # final evaluation
-    test_corrects = 0
-    total = 0
-    model.eval()
-    with torch.no_grad():
-        for x, y in val_loader:
-            x = x.to(config.device)
-            y = y.to(config.device)
-            y_hat = model(x).argmax(1)
-            test_corrects += y_hat.eq(y).sum().item()
-            total += y.size(0)
-    
-    print(f"Accuracy evaluation on test set: {(test_corrects/total):.2f}")
-
-                
 
 if __name__ == "__main__":
     import sys
