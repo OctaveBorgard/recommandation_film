@@ -1,40 +1,41 @@
 import torch
-import torch.nn as nn
 from torchvision import transforms
 from flask import Flask, request, jsonify
 from PIL import Image
 import io
 import torch.nn.functional as F
-from models import VGG16Handmade   
-import os
+from models import  BertClf
+from transformers import  DistilBertForSequenceClassification
+from transformers import DistilBertTokenizerFast
 app = Flask(__name__)
 
 
 device = torch.device("cpu")
 
 # Classes of the dataset 
-CLASSES = [
-    "action",
-    "animation",
-    "comedy",
-    "documentary",
-    "drama",
-    "fantasy",
-    "horror",
-    "romance",
-    "science Fiction",  
-    "thriller"
-]
+CLASSES = ["action", "animation", "comedy", "documentary", "drama",
+           "fantasy", "horror", "romance", "science Fiction", "thriller"]
+
+
+movie_categories = ["horror","comedy","drama","action","documentary",
+                    "romance","science Fiction","animation","thriller","fantasy"]
 
 # Load the trained model
-# model = VGG16Handmade(num_classes=len(CLASSES))
-# model.load_state_dict(torch.load("genre_model.pth", map_location=device))
 from models import efficient_net
-model = efficient_net(num_classes=len(CLASSES))
+classifier_poster = efficient_net(num_classes=len(CLASSES))
 state = torch.load("exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth", map_location=device)
-model.load_state_dict(state["model_state_dict"])
+classifier_poster.load_state_dict(state["model_state_dict"])
+classifier_poster.eval()
 
-model.eval()
+tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
+distilbert = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased",
+                                                                  num_labels=len(movie_categories),
+                                                                  output_attentions=True,
+                                                                  output_hidden_states=True)
+classifier_plot = BertClf(distilbert)
+state = torch.load("exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth", map_location=device)
+classifier_plot.load_state_dict(state["model_state_dict"])
+classifier_plot.eval()
 
 # Preprocessing consistent with training
 transform = transforms.Compose([
@@ -43,7 +44,7 @@ transform = transforms.Compose([
 ])
 
 @app.route("/predict", methods=["POST"])
-def predict():
+def predict_poster():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -54,7 +55,7 @@ def predict():
     img_tensor = transform(img).unsqueeze(0)
 
     with torch.no_grad():
-        outputs = model(img_tensor)
+        outputs = classifier_poster(img_tensor)
         pred_idx = outputs.argmax(1).item()
 
     return jsonify({"genre": CLASSES[pred_idx]})
@@ -80,9 +81,9 @@ def validate_poster():
     # 3. Preprocess like when we training
     img_tensor = transform(img).unsqueeze(0)
 
-    # 4. Run model + calcul MSP score
+    # 4. Run classifier_poster + calcul MSP score
     with torch.no_grad():
-        logits = model(img_tensor)
+        logits = classifier_poster(img_tensor)
         confidence = msp_score(logits)
 
     # 5. >= threshold => poster ; < threshold => not   
@@ -94,6 +95,25 @@ def validate_poster():
         "confidence": float(confidence),
         "method": "OOD detection using Maximum Softmax Probability"
     })
+
+@app.route("/predict_plot", methods=["POST"])
+def predict_plot():
+    if "text" not in request.json:
+        return jsonify({"error": "No text provided"}), 400
+
+    text = request.json["text"]
+
+    inputs = tokenizer(text, padding=True, truncation=True)
+    input_ids = inputs['input_ids']
+    attention_mask = inputs['attention_mask']
+    input_ids = torch.tensor(input_ids).unsqueeze(0)  
+    attention_mask = torch.tensor(attention_mask).unsqueeze(0)  
+
+    with torch.no_grad():
+        outputs,_,_ = classifier_plot(input_ids, attention_mask)
+
+    _, pred_idx = outputs.max(1)
+    return jsonify({"genre": movie_categories[pred_idx.item()]})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075)
