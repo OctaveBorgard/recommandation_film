@@ -1,4 +1,3 @@
-from transformers import  DistilBertForSequenceClassification
 import torch.nn as nn
 
 class BertClf(nn.Module):
