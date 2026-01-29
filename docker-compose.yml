@@ -8,7 +8,6 @@ services:
       - "5075:5075"
     volumes:
       - ./app/poster_api.py:/app/poster_api.py
-
   gradio:
     build:
       context: .
