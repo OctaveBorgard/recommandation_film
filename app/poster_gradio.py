@@ -5,7 +5,7 @@ import os
 import io
 
 # API_URL = "http://localhost:5075/predict"
-API_URL = "http://api:5075/predict_poster"  #API_URL  for predict
+API_URL  = "http://api:5075/predict"   #API_URL  for predict
 API_VALIDATE_URL = "http://api:5075/validate-poster"   # Partie 2
 
 def predict_genre_poster(image):
