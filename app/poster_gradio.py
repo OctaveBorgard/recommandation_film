@@ -5,7 +5,7 @@ import os
 import io
 
 # API_URL = "http://localhost:5075/predict"
-API_URL = "http://api:5075/predict_poster"  #API_URL  for predict
+API_URL = "http://api:5075/predict" #API_URL  for predict
 API_VALIDATE_URL = "http://api:5075/validate-poster"   # Partie 2
 
 def predict_genre_poster(image):
@@ -53,14 +53,16 @@ def predict_genre_from_plot(plot):
 with gr.Blocks() as app:
     gr.Markdown("# Movie Poster Tool")
 
-    image_in = gr.Image(type="pil", label="Upload Poster")
-
     with gr.Row():
-        btn_genre = gr.Button("Predict Genre")
-        btn_validate = gr.Button("Validate Poster")
+        with gr.Column(scale=1):
+            image_in = gr.Image(type="pil", label="Upload Poster")
 
-    genre_out = gr.Textbox(label="Predicted Genre")
-    valid_out = gr.Textbox(label="Poster Validation")
+        with gr.Column(scale=1):
+            genre_out = gr.Textbox(label="Predicted Genre")
+            valid_out = gr.Textbox(label="Poster Validation")
+
+            btn_genre = gr.Button("Predict Genre")
+            btn_validate = gr.Button("Validate Poster")
 
     btn_genre.click(fn=predict_genre_poster, inputs=image_in, outputs=genre_out)
     btn_validate.click(fn=validate_poster, inputs=image_in, outputs=valid_out)
@@ -73,7 +75,7 @@ with gr.Blocks() as app:
             btn_plot_genre = gr.Button("Predict Genre from Plot")
             # add output box for genre prediction from plot
             plot_genre_out = gr.Textbox(label="Predicted Genre from Plot")
-    btn_plot_genre.click(fn=predict_genre_from_plot, inputs=plot_in, outputs=plot_genre_out)
 
+    btn_plot_genre.click(fn=predict_genre_from_plot, inputs=plot_in, outputs=plot_genre_out)
 
 app.launch(server_name="0.0.0.0", server_port=7860)

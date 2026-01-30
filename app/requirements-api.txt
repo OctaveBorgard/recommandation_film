@@ -1,7 +1,4 @@
 flask
-torch
-torchvision
 pillow
 requests
 transformers
-

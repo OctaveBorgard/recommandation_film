@@ -87,7 +87,7 @@ def validate_poster():
         confidence = msp_score(logits)
 
     # 5. >= threshold => poster ; < threshold => not   
-    THRESHOLD = 0.2
+    THRESHOLD = 0.3
 
     # 6. Return result
     return jsonify({

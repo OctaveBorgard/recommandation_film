@@ -1,14 +1,21 @@
 FROM python:3.10
+
 WORKDIR /app
 
 COPY app/requirements-api.txt .
-RUN pip install --no-cache-dir -r requirements-api.txt
 
+RUN pip install --upgrade pip
+
+
+RUN pip install torch torchvision \
+    --index-url https://download.pytorch.org/whl/cpu
+
+
+RUN pip install -r requirements-api.txt
+
+COPY app /app
 COPY models /app/models
-COPY exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth /app/exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth
-COPY exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth /app/exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth
-
-COPY app/poster_api.py /app/poster_api.py
+COPY exp /app/exp
 
 EXPOSE 5075
 CMD ["python", "poster_api.py"]
