@@ -11,7 +11,7 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 
 
 # collecte des chemins d'images
-root_dir = Path("/content") # chemin à spécifier
+root_dir = Path("./../content")
 image_paths = []
 
 for root, dirs, files in os.walk(root_dir):
@@ -20,11 +20,11 @@ for root, dirs, files in os.walk(root_dir):
         if file.lower().endswith((".png", ".jpg", ".jpeg")):
             image_paths.append(os.path.join(root, file))
 
-print(f"Nombre d'images trouvées : {len(image_paths)}")
+print(f"Number of images : {len(image_paths)}")
 
 batch_size = 32
 image_embeddings_list = []
-print("Encodage des images en cours...")
+print("Encoding...")
 for i in range(0, len(image_paths), batch_size):
     batch_paths = image_paths[i:i + batch_size]
     batch_images = []
@@ -46,8 +46,6 @@ all_embeddings = torch.cat(image_embeddings_list).numpy()
 dim = all_embeddings.shape[1]
 index = AnnoyIndex(dim, metric="angular")
 
-# Création du dictionnaire de correspondance (Mapping)
-# Index Annoy (int) -> Chemin de l'image (str)
 mapping = {}
 
 for i, emb in enumerate(all_embeddings):
@@ -56,7 +54,6 @@ for i, emb in enumerate(all_embeddings):
 
 index.build(20)
 
-# --- SAUVEGARDE ---
 index_path = "image_index.ann"
 mapping_path = "image_mapping.json"
 
@@ -64,5 +61,58 @@ index.save(index_path)
 with open(mapping_path, 'w') as f:
     json.dump(mapping, f)
 
-print(f"Index sauvegardé dans {index_path}")
-print(f"Mapping sauvegardé dans {mapping_path}")
+print(f"Index saved {index_path}")
+print(f"Mapping saved {mapping_path}")
+
+
+# ----------------------Text--------------------------
+import pandas as pd
+csv_path = "./../content/movie_plots.csv"
+df = pd.read_csv(csv_path)
+
+plots = df['movie_plot'].tolist()
+
+print(f"Nombre de résumés à encoder : {len(plots)}")
+
+batch_size = 32
+text_embeddings_list = []
+
+print("Encoding text plots...")
+for i in range(0, len(plots), batch_size):
+    batch_texts = plots[i:i + batch_size]
+    
+    text_tokens = clip.tokenize(batch_texts, truncate=True).to(device)
+    
+    with torch.no_grad():
+        text_features = model.encode_text(text_tokens)
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+        text_embeddings_list.append(text_features.cpu())
+
+all_text_embeddings = torch.cat(text_embeddings_list).numpy()
+
+
+dim = all_text_embeddings.shape[1]
+text_index = AnnoyIndex(dim, metric="angular")
+
+
+text_mapping = {}
+
+for i, emb in enumerate(all_text_embeddings):
+    text_index.add_item(i, emb)
+    text_mapping[i] = {
+        "poster_path": df.iloc[i]['movie_poster_path'],
+        "plot": df.iloc[i]['movie_plot'],
+        "category": df.iloc[i]['movie_category']
+    }
+
+text_index.build(20)
+
+text_index_path = "text_index.ann"
+text_mapping_path = "text_mapping.json"
+
+text_index.save(text_index_path)
+with open(text_mapping_path, 'w', encoding='utf-8') as f:
+    json.dump(text_mapping, f, ensure_ascii=False, indent=4)
+
+print(f"Index text saved : {text_index_path}")
+print(f"Mapping text saved : {text_mapping_path}")
