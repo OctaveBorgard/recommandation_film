@@ -49,6 +49,32 @@ def predict_genre_from_plot(plot):
         return "Error: API did not return a valid response."
 
     return response.json().get("genre", "Unknown")
+def search_movies_nl(query):
+    response = requests.post(
+        "http://api:5075/search",
+        json={"query": query}
+    )
+
+    if response.status_code != 200:
+        return "Error calling search API"
+
+    data = response.json()
+    results = data.get("results", [])
+
+    if not results:
+        return "No results found."
+
+    # Format text output simply
+    output = ""
+    for i, res in enumerate(results, 1):
+        output += (
+            f"{i}. Source: {res['source']}\n"
+            f"   Score: {res['score']:.2f}\n"
+            f"   Plot: {res['plot'][:150]}...\n\n"
+        )
+
+    return output
+
 
 with gr.Blocks() as app:
     gr.Markdown("# Movie Poster Tool")
@@ -77,5 +103,24 @@ with gr.Blocks() as app:
             plot_genre_out = gr.Textbox(label="Predicted Genre from Plot")
 
     btn_plot_genre.click(fn=predict_genre_from_plot, inputs=plot_in, outputs=plot_genre_out)
+    with gr.Row():
+        nl_query = gr.Textbox(
+        lines=2,
+        placeholder="Describe the movie you are looking for...",
+        label="Natural Language Movie Search"
+        )
+
+    with gr.Row():
+        btn_search_nl = gr.Button("Search Movies")
+        nl_results = gr.Textbox(
+        label="Search Results",
+        lines=12
+        )
+
+    btn_search_nl.click(
+         fn=search_movies_nl,
+         inputs=nl_query,
+        outputs=nl_results
+        )
 
 app.launch(server_name="0.0.0.0", server_port=7860)

@@ -16,6 +16,7 @@ RUN pip install -r requirements-api.txt
 COPY app /app
 COPY models /app/models
 COPY exp /app/exp
+COPY indexes /app/indexes
 
 EXPOSE 5075
 CMD ["python", "poster_api.py"]

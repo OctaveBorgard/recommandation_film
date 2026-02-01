@@ -7,6 +7,12 @@ import torch.nn.functional as F
 from models import  BertClf
 from transformers import  DistilBertForSequenceClassification
 from transformers import DistilBertTokenizerFast
+import os
+import json
+from models.models_for_rag import search_hybrid_split
+from models.models_for_rag import search_hybrid_api
+
+
 app = Flask(__name__)
 
 
@@ -117,3 +123,22 @@ def predict_plot():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075)
+    
+    
+@app.route("/search", methods=["POST"])
+def search_movies():
+    if not request.is_json:
+        return jsonify({"error": "Expected JSON body"}), 400
+
+    data = request.get_json()
+    query = data.get("query", "").strip()
+
+    if not query:
+        return jsonify({"error": "Missing 'query' field"}), 400
+
+    results = search_hybrid_api(query)
+
+    return jsonify({
+        "query": query,
+        "results": results
+    })

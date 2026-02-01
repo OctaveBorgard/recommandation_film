@@ -1,4 +1,12 @@
 flask
-pillow
+flask-cors
 requests
+pillow
+numpy
+torch
+torchvision
 transformers
+scikit-learn
+annoy
+matplotlib
+git+https://github.com/openai/CLIP.git
