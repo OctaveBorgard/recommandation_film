@@ -7,6 +7,12 @@ import torch.nn.functional as F
 from models import  BertClf
 from transformers import  DistilBertForSequenceClassification
 from transformers import DistilBertTokenizerFast
+import os
+import json
+from models.models_for_rag import search_hybrid_split
+from models.models_for_rag import search_hybrid_api
+
+
 app = Flask(__name__)
 
 
@@ -23,7 +29,7 @@ movie_categories = ["horror","comedy","drama","action","documentary",
 # Load the trained model
 from models import efficient_net
 classifier_poster = efficient_net(num_classes=len(CLASSES))
-state = torch.load("exp/poster_classification/EfficientNet_4837/checkpoints/epoch_030_test_avg_loss_0.0259.pth", map_location=device)
+state = torch.load("exp/poster_classification.pth", map_location=device) #30 epoch
 classifier_poster.load_state_dict(state["model_state_dict"])
 classifier_poster.eval()
 
@@ -33,7 +39,7 @@ distilbert = DistilBertForSequenceClassification.from_pretrained("distilbert-bas
                                                                   output_attentions=True,
                                                                   output_hidden_states=True)
 classifier_plot = BertClf(distilbert)
-state = torch.load("exp/plot_classification/bertcls_4846/checkpoints/epoch_065_test_avg_loss_0.0068.pth", map_location=device)
+state = torch.load("exp/plot_classification.pth", map_location=device) #65 epoch
 classifier_plot.load_state_dict(state["model_state_dict"])
 classifier_plot.eval()
 
@@ -114,6 +120,24 @@ def predict_plot():
 
     _, pred_idx = outputs.max(1)
     return jsonify({"genre": movie_categories[pred_idx.item()]})
+
+@app.route("/search", methods=["POST"])
+def search_movies():
+    if not request.is_json:
+        return jsonify({"error": "Expected JSON body"}), 400
+
+    data = request.get_json()
+    query = data.get("query", "").strip()
+
+    if not query:
+        return jsonify({"error": "Missing 'query' field"}), 400
+
+    results = search_hybrid_api(query)
+
+    return jsonify({
+        "query": query,
+        "results": results
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075)

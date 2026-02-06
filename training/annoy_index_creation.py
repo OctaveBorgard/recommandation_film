@@ -11,8 +11,12 @@ model, preprocess = clip.load("ViT-B/32", device=device)
 
 
 # collecte des chemins d'images
-root_dir = Path("./../content")
+# dossier racine des posters
+root_dir = Path("content/sorted_movie_posters_paligema")
+
+
 image_paths = []
+
 
 for root, dirs, files in os.walk(root_dir):
     for file in files:
@@ -67,7 +71,7 @@ print(f"Mapping saved {mapping_path}")
 
 # ----------------------Text--------------------------
 import pandas as pd
-csv_path = "./../content/movie_plots.csv"
+csv_path = "content/movie_plots.csv"
 df = pd.read_csv(csv_path)
 
 plots = df['movie_plot'].tolist()
