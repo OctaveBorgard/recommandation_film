@@ -13,10 +13,24 @@ RUN pip install torch torchvision \
 
 RUN pip install -r requirements-api.txt
 
+RUN pip install gdown unzip
+RUN mkdir -p /app/exp
+RUN gdown --id 1Iw3F8i9O9RxyOUDQ-fih3UZ9uypsDRQT -O /app/exp/poster_classification.pth
+RUN gdown --id 1s30tQXkdKnXoCbPcYLbbhnTIDfXAaKkp -O /app/exp/plot_classification.pth
+RUN gdown --id 1SIEpVC-92Tpji8l7i8DE0IN11on0As-s -O /app/exp/image_index.ann
+RUN gdown --id 1EhHB_hUZwGcgvhZC8tnR29rmXPQjww4a -O /app/exp/text_index.ann
+RUN gdown --id 157SwvKuM2Ll8YabmWBMFGbpFa9CWlXX- -O /app/exp/image_mapping.json
+RUN gdown --id 1VkWKtUJVvnms2jZpyo7kc7d5KOQMt-TO -O /app/exp/text_mapping.json
+
+RUN gdown --id 1-1OSGlN2EOqyZuehBgpgI8FNOtK-caYf -O /tmp/MovieGenre.zip
+RUN unzip /tmp/MovieGenre.zip -d /app
+RUN rm /tmp/MovieGenre.zip
+
+RUN gdown --id 1YHwaHYHSqv11_vqQpa7z1CO892B3431p -O /app/content/movie_plots.csv
+
+
 COPY app /app
 COPY models /app/models
-COPY exp /app/exp
-COPY indexes /app/indexes
 
 EXPOSE 5075
 CMD ["python", "poster_api.py"]
