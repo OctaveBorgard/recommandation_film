@@ -19,15 +19,15 @@ POSTER_ROOT = "/app/content/sorted_movie_posters_paligema/"
 
 
 u_image = AnnoyIndex(dim, 'angular')
-u_image.load("indexes/image_index.ann")
+u_image.load("/app/exp/image_index.ann")
 
-with open("indexes/image_mapping.json", 'r') as f:
+with open("/app/exp/image_mapping.json", 'r') as f:
     mapping_image = json.load(f)
 
 u_text = AnnoyIndex(dim, 'angular')
-u_text.load("indexes/text_index.ann")
+u_text.load("/app/exp/text_index.ann")
 
-with open("indexes/text_mapping.json", 'r', encoding="utf-8") as f:
+with open("/app/exp/text_mapping.json", 'r', encoding="utf-8") as f:
     mapping_text = json.load(f)
 
 
@@ -98,7 +98,7 @@ def search_hybrid_split(query_text):
     plt.show()
 
 # Test
-search_hybrid_split("animated cartoons in Arabia")
+#search_hybrid_split("animated cartoons in Arabia")
 
 
 def search_hybrid_api(query_text, top_k=2):

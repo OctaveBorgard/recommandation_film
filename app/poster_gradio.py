@@ -7,6 +7,8 @@ import io
 # API_URL = "http://localhost:5075/predict"
 API_URL = "http://api:5075/predict" #API_URL  for predict
 API_VALIDATE_URL = "http://api:5075/validate-poster"   # Partie 2
+API_PREDICT_PLOT_URL = "http://api:5075/predict_plot"
+API_SEARCH_MOVIE_URL = "http://api:5075/search"
 
 def predict_genre_poster(image):
     img_byte_arr = io.BytesIO()
@@ -41,7 +43,7 @@ def validate_poster(image):
 
 def predict_genre_from_plot(plot):
     response = requests.post(
-        "http://api:5075/predict_plot",
+        API_PREDICT_PLOT_URL,
         json={"text": plot}
     )
 
@@ -51,7 +53,7 @@ def predict_genre_from_plot(plot):
     return response.json().get("genre", "Unknown")
 def search_movies_nl(query):
     response = requests.post(
-        "http://api:5075/search",
+        API_SEARCH_MOVIE_URL,
         json={"query": query}
     )
 
