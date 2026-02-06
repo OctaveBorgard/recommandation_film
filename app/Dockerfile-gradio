@@ -8,6 +8,7 @@ RUN pip install --default-timeout=300 -r requirements-gradio.txt
 
 
 COPY app/poster_gradio.py /app/poster_gradio.py
+COPY content ./content
 
 
 EXPOSE 7860
