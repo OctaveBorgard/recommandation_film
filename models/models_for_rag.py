@@ -102,20 +102,17 @@ def search_hybrid_split(query_text):
 
 
 def search_hybrid_api(query_text, top_k=2):
-    """
-    API-friendly version of the hybrid CLIP + Annoy search.
-    Returns results instead of displaying them.
-    """
-
-    # Encode user query
+    # Encodage de la requête utilisateur
     text_tokens = clip.tokenize([query_text], truncate=True).to(device)
     with torch.no_grad():
         text_features = model.encode_text(text_tokens)
         text_features /= text_features.norm(dim=-1, keepdim=True)
 
     query_vector = text_features.cpu().numpy()[0]
-
     results = []
+
+    # Dossier racine tel que défini dans le Dockerfile
+    base_path = "/app/content/sorted_movie_posters_paligema"
 
     # ---------- IMAGE SEARCH ----------
     ids_img, dists_img = u_image.get_nns_by_vector(
@@ -123,15 +120,26 @@ def search_hybrid_api(query_text, top_k=2):
     )
 
     for idx, dist in zip(ids_img, dists_img):
-        full_path = mapping_image[str(idx)]
-        filename = os.path.basename(full_path)
+        raw_path = mapping_image[str(idx)]
+        
+        # 1. Conversion des \ en / (Windows -> Linux)
+        clean_path = raw_path.replace('\\', '/')
+        
+        # 2. Extraction des deux derniers segments (ex: horror/69766.jpg)
+        path_parts = clean_path.split('/')
+        relative_filename = "/".join(path_parts[-2:]) 
+        
+        # 3. Reconstruction du chemin absolu pour Docker
+        full_path = os.path.join(base_path, relative_filename)
+        
+        filename = os.path.basename(clean_path)
         extra_info = path_to_data.get(filename, {})
 
         results.append({
             "source": "image",
             "score": float((2 - dist**2) / 2),
             "poster_path": full_path,
-            "plot": extra_info.get("plot", "")
+            "plot": extra_info.get("plot", "Résumé non disponible")
         })
 
     # ---------- TEXT SEARCH ----------
@@ -141,12 +149,19 @@ def search_hybrid_api(query_text, top_k=2):
 
     for idx, dist in zip(ids_txt, dists_txt):
         data = mapping_text[str(idx)]
+        
+        # Application du même traitement de nettoyage
+        raw_path = data.get("poster_path", "")
+        clean_path = raw_path.replace('\\', '/')
+        path_parts = clean_path.split('/')
+        relative_filename = "/".join(path_parts[-2:])
+        full_path = os.path.join(base_path, relative_filename)
 
         results.append({
             "source": "text",
             "score": float((2 - dist**2) / 2),
-            "poster_path": data.get("poster_path", ""),
-            "plot": data.get("plot", "")
+            "poster_path": full_path,
+            "plot": data.get("plot", "Résumé non disponible")
         })
-
+    
     return results
