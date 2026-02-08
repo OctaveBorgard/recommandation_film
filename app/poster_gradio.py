@@ -9,6 +9,7 @@ API_URL = f"{API_BASE_URL}/predict"
 API_VALIDATE_URL = f"{API_BASE_URL}/validate-poster"
 API_PREDICT_PLOT_URL = f"{API_BASE_URL}/predict_plot"
 API_SEARCH_MOVIE_URL = f"{API_BASE_URL}/search"
+API_SEARCH_IMAGE_URL = f"{API_BASE_URL}/search-image"
 
 # --- Fonctions (inchangées mais regroupées) ---
 
@@ -52,6 +53,30 @@ def search_movies_nl(query):
         
         text_details += f"### {i}. {res['source'].upper()} (Match: {res['score']*100:.1f}%)\n{res['plot']}\n\n---\n"
     return gallery_items, text_details
+
+
+def search_by_camera(image):
+    if image is None: return None, "Please capture an image"
+    
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+    
+    response = requests.post(
+        API_SEARCH_IMAGE_URL, 
+        files={"file": ("input.png", img_byte_arr, "image/png")}
+    )
+    
+    if response.status_code != 200: return None, "Error calling API"
+    
+    results = response.json().get("results", [])
+    if not results: return None, "No similar movie found."
+
+    res = results[0]
+    img_path = res['poster_path']
+    details = f"### Match Found: {res['score']*100:.1f}%\n\n**Plot:** {res['plot']}"
+    
+    return img_path, details
 
 # --- Interface Graphique ---
 
@@ -103,11 +128,22 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Movie AI Suite") as app:
                     )
                 with gr.Column(scale=3):
                     nl_results_text = gr.Markdown(label="Detailed Synopses")
+        # ONGLET 4 : RECHERCHE IMAGE
+        with gr.TabItem("Camera Search"):
+            gr.Markdown("### Take a photo of a poster to find the movie")
+            with gr.Row():
+                with gr.Column() as col1: # On définit col1 ici
+                    cam_in = gr.Image(sources=["webcam"], type="pil", label="Camera")
+                    btn_cam = gr.Button("Search from Photo", variant="primary")
+                with gr.Column() as col2: # On définit col2 ici
+                    cam_out_img = gr.Image(label="Found Poster")
+                    cam_out_plot = gr.Markdown(label="Match Details")
 
     # --- Events ---
     btn_genre.click(fn=predict_genre_poster, inputs=image_in, outputs=genre_out)
     btn_validate.click(fn=validate_poster, inputs=image_in, outputs=valid_out)
     btn_plot_genre.click(fn=predict_genre_from_plot, inputs=plot_in, outputs=plot_genre_out)
     btn_search_nl.click(fn=search_movies_nl, inputs=nl_query, outputs=[nl_gallery, nl_results_text])
+    btn_cam.click(fn=search_by_camera, inputs=cam_in, outputs=[cam_out_img, cam_out_plot])
 
 app.launch(server_name="0.0.0.0", server_port=7860)
