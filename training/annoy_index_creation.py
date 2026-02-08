@@ -9,11 +9,9 @@ from pathlib import Path
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
 
-
 # collecte des chemins d'images
 # dossier racine des posters
 root_dir = Path("content/sorted_movie_posters_paligema")
-
 
 image_paths = []
 
@@ -74,17 +72,46 @@ import pandas as pd
 csv_path = "content/movie_plots.csv"
 df = pd.read_csv(csv_path)
 
-plots = df['movie_plot'].tolist()
+def get_text_chunks(text, chunk_size=50, overlap=10):
+    """Découpe un texte en morceaux de 'chunk_size' mots avec un 'overlap'."""
+    words = text.split()
+    chunks = []
+    if len(words) <= chunk_size:
+        return [text]
+    
+    current = 0
+    while current < len(words):
+        end = min(len(words), current + chunk_size)
+        chunk = " ".join(words[current:end])
+        chunks.append(chunk)
+        if end == len(words):
+            break
+        current += chunk_size - overlap
+    return chunks
 
-print(f"Nombre de résumés à encoder : {len(plots)}")
+# Préparation des données pour l'indexation
+all_chunks = []
+chunk_to_original_index = []
 
+print("Preparation des chunks...")
+for idx, row in df.iterrows():
+    plot_chunks = get_text_chunks(str(row['movie_plot']), chunk_size=40, overlap=10)
+    for c in plot_chunks:
+        all_chunks.append(c)
+        chunk_to_original_index.append(idx) # Garde la trace de la ligne originale
+
+print(f"Nombre total de chunks à encoder : {len(all_chunks)}")
+
+# Encodage par batch
 batch_size = 32
 text_embeddings_list = []
 
-print("Encoding text plots...")
-for i in range(0, len(plots), batch_size):
-    batch_texts = plots[i:i + batch_size]
+print("Encoding text chunks...")
+for i in range(0, len(all_chunks), batch_size):
+    batch_texts = all_chunks[i:i + batch_size]
     
+    # truncate=True est gardé par sécurité pour CLIP (limite 77 tokens), 
+    # mais le chunking en amont réduit grandement la perte d'info.
     text_tokens = clip.tokenize(batch_texts, truncate=True).to(device)
     
     with torch.no_grad():
@@ -94,23 +121,28 @@ for i in range(0, len(plots), batch_size):
 
 all_text_embeddings = torch.cat(text_embeddings_list).numpy()
 
-
+# Création de l'index Annoy
 dim = all_text_embeddings.shape[1]
 text_index = AnnoyIndex(dim, metric="angular")
-
-
 text_mapping = {}
 
 for i, emb in enumerate(all_text_embeddings):
     text_index.add_item(i, emb)
+    
+    # On récupère les infos originales via l'index de référence
+    original_row_idx = chunk_to_original_index[i]
+    original_row = df.iloc[original_row_idx]
+    
+    # Le format reste STRICTEMENT identique à votre demande
     text_mapping[i] = {
-        "poster_path": df.iloc[i]['movie_poster_path'],
-        "plot": df.iloc[i]['movie_plot'],
-        "category": df.iloc[i]['movie_category']
+        "poster_path": original_row['movie_poster_path'],
+        "plot": original_row['movie_plot'], # On garde le plot complet pour l'affichage
+        "category": original_row['movie_category']
     }
 
 text_index.build(20)
 
+# Sauvegarde
 text_index_path = "text_index.ann"
 text_mapping_path = "text_mapping.json"
 
