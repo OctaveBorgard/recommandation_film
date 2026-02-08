@@ -165,3 +165,35 @@ def search_hybrid_api(query_text, top_k=2):
         })
     
     return results
+
+def search_by_image_api(image_input, top_k=1):
+    # Encodage de l'image (preprocess vient de clip.load)
+    image_input = preprocess(image_input).unsqueeze(0).to(device)
+    
+    with torch.no_grad():
+        image_features = model.encode_image(image_input)
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+
+    query_vector = image_features.cpu().numpy()[0]
+    base_path = "/app/content/sorted_movie_posters_paligema"
+
+    # Recherche dans l'index IMAGE
+    ids_img, dists_img = u_image.get_nns_by_vector(query_vector, top_k, include_distances=True)
+
+    results = []
+    for idx, dist in zip(ids_img, dists_img):
+        raw_path = mapping_image[str(idx)]
+        clean_path = raw_path.replace('\\', '/')
+        relative_filename = "/".join(clean_path.split('/')[-2:]) 
+        full_path = os.path.join(base_path, relative_filename)
+        
+        filename = os.path.basename(clean_path)
+        extra_info = path_to_data.get(filename, {})
+
+        results.append({
+            "source": "visual_search",
+            "score": float((2 - dist**2) / 2),
+            "poster_path": full_path,
+            "plot": extra_info.get("plot", "Résumé non disponible")
+        })
+    return results

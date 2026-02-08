@@ -9,8 +9,7 @@ from transformers import  DistilBertForSequenceClassification
 from transformers import DistilBertTokenizerFast
 import os
 import json
-from models.models_for_rag import search_hybrid_split
-from models.models_for_rag import search_hybrid_api
+from models.models_for_rag import search_hybrid_api, search_by_image_api
 
 
 app = Flask(__name__)
@@ -138,6 +137,19 @@ def search_movies():
         "query": query,
         "results": results
     })
+
+@app.route("/search-image", methods=["POST"])
+def search_image():
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    img = Image.open(io.BytesIO(file.read())).convert("RGB")
+    
+    # On récupère le résultat le plus proche
+    results = search_by_image_api(img, top_k=1)
+
+    return jsonify({"results": results})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5075)
