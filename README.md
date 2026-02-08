@@ -1,6 +1,6 @@
 # Movie Analysis & Recommendation System
 
-Développer par : Do Quoc-Bao, Nguyen Thi-Bao-Ngoc, Sidibe Mata-Dramane, Borgard Octave
+Développé par : Do Quoc-Bao, Nguyen Thi-Bao-Ngoc, Sidibe Mata-Dramane, Borgard Octave
 
 Ce projet est une plateforme d'analyse cinématographique exploitant le Deep Learning et le NLP pour classifier des films et générer des recommandations personnalisées.
 
