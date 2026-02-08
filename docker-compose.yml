@@ -8,6 +8,7 @@ services:
       - "5075:5075"
     volumes:
       - ./app/poster_api.py:/app/poster_api.py
+      - media_data:/app/content
   gradio:
     build:
       context: .
@@ -16,5 +17,8 @@ services:
       - "7860:7860"
     volumes:
       - ./app/poster_gradio.py:/app/poster_gradio.py
+      - media_data:/app/content
     depends_on:
       - api
+volumes:
+  media_data:

@@ -22,7 +22,6 @@ RUN gdown --id 13rKAIrktMSMB__ZIl_c1DMF5M2jVAQ2L -O /app/exp/text_index.ann
 RUN gdown --id 157SwvKuM2Ll8YabmWBMFGbpFa9CWlXX- -O /app/exp/image_mapping.json
 RUN gdown --id 1mi_acHl-ww_fqospZcf2HtkCa6u5VDxr -O /app/exp/text_mapping.json
 
-
 RUN gdown --id 1-1OSGlN2EOqyZuehBgpgI8FNOtK-caYf -O /tmp/MovieGenre.zip
 RUN unzip /tmp/MovieGenre.zip -d /app
 RUN rm /tmp/MovieGenre.zip
