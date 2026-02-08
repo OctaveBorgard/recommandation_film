@@ -146,4 +146,4 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Movie AI Suite") as app:
     btn_search_nl.click(fn=search_movies_nl, inputs=nl_query, outputs=[nl_gallery, nl_results_text])
     btn_cam.click(fn=search_by_camera, inputs=cam_in, outputs=[cam_out_img, cam_out_plot])
 
-app.launch(server_name="0.0.0.0", server_port=7860)
+app.launch(server_name="0.0.0.0", server_port=7860, share=True)
