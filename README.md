@@ -1,6 +1,10 @@
 # Movie Analysis & Recommendation System
 
+Développer par : Do Quoc-Bao, Nguyen Thi-Bao-Ngoc, Sidibe Mata-Dramane, Borgard Octave
+
 Ce projet est une plateforme d'analyse cinématographique exploitant le Deep Learning et le NLP pour classifier des films et générer des recommandations personnalisées.
+
+A noter que la parti 1 (développé sur le main car correspondant au code de base du projet) a été développer en TP, donc nous avons tous participer à son développement contrairement à ce que les commits de cette partie peuvent laisser penser.
 
 ## Fonctionnalités
 
