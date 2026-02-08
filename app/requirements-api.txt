@@ -9,4 +9,3 @@ transformers
 scikit-learn
 annoy
 matplotlib
-git+https://github.com/openai/CLIP.git
