@@ -130,7 +130,7 @@ with gr.Blocks(theme=gr.themes.Soft(), title="Movie AI Suite") as app:
                     nl_results_text = gr.Markdown(label="Detailed Synopses")
         # ONGLET 4 : RECHERCHE IMAGE
         with gr.TabItem("Camera Search"):
-            gr.Markdown("### Take a photo of a poster to find the movie")
+            gr.Markdown("### Take a photo of you and find wich movie you are !")
             with gr.Row():
                 with gr.Column() as col1: # On définit col1 ici
                     cam_in = gr.Image(sources=["webcam"], type="pil", label="Camera")
